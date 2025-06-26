@@ -8,9 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let eventos = [];
   const executados = new Set();
-  let tocando = false;
 
-  // Utilitários visuais
   function setPlayUI() {
     player.innerText = "⏸️";
     player.classList.add("animate-pulse");
@@ -21,16 +19,13 @@ document.addEventListener("DOMContentLoaded", () => {
     player.classList.remove("animate-pulse");
   }
 
-  // Controle do player
-  function togglePlayPause() {
+  function tocarOuPausarAudio() {
     if (qoreAudio.paused) {
       qoreAudio.play();
       setPlayUI();
-      tocando = true;
     } else {
       qoreAudio.pause();
       setPauseUI();
-      tocando = false;
     }
   }
 
@@ -38,18 +33,17 @@ document.addEventListener("DOMContentLoaded", () => {
     instrucao.style.display = "none";
     qoreAudio.play();
     setPlayUI();
-    tocando = true;
   }
 
   function executarAcoes(acoes) {
     acoes.forEach(acao => {
       if (acao === "turnOffAllLabels") {
-        if (typeof turnOffAllLabels === "function") turnOffAllLabels();
+        window.turnOffAllLabels?.();
       } else if (acao === "activateBarGraph") {
-        if (typeof activateBarGraph === "function") activateBarGraph();
+        window.activateBarGraph?.();
       } else if (acao.startsWith("activate:")) {
         const id = acao.split(":")[1];
-        if (typeof activateLabel === "function") activateLabel(id);
+        window.activateLabel?.(id);
       }
     });
   }
@@ -65,36 +59,33 @@ document.addEventListener("DOMContentLoaded", () => {
           qoreAudio.pause();
           setPauseUI();
           instrucao.style.display = "block";
-          tocando = false;
         }
       }
     });
   }
 
   function carregarConfiguracao() {
-    const config = document.getElementById("qore-config");
-    if (config) {
-      const json = JSON.parse(config.textContent);
+    const configTag = document.getElementById("qore-config");
+    if (!configTag) return;
+    try {
+      const json = JSON.parse(configTag.textContent);
       eventos = json.eventos || [];
+    } catch (e) {
+      console.error("Erro ao ler configuração JSON:", e);
     }
   }
 
-  // Controles básicos
-  player.addEventListener("click", togglePlayPause);
+  // Setup
+  player.addEventListener("click", tocarOuPausarAudio);
   rewindBtn.addEventListener("click", () => qoreAudio.currentTime -= 10);
   forwardBtn.addEventListener("click", () => qoreAudio.currentTime += 10);
   continueBtn.addEventListener("click", retomarQoreAudio);
   qoreAudio.addEventListener("timeupdate", monitorarTempo);
 
-  // Inicialização
   carregarConfiguracao();
 
-  // Fallbacks (sobrescreva no embed)
+  // Fallbacks para ações
   window.turnOffAllLabels = () => console.log("🔕 Todas as labels desligadas");
   window.activateLabel = id => console.log("✅ Ativada:", id);
   window.activateBarGraph = () => console.log("📊 Gráfico ativado");
-
-  // Expor para uso externo
-  window.retomarQoreAudio = retomarQoreAudio;
-  window.tocarQoreAudio = togglePlayPause;
 });
