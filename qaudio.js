@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let tocando = false;
   let audioCtx, analyser, source, dataArray, animationFrame;
 
-  // 🧠 Carrega eventos do JSON embed
-  const eventos = JSON.parse(document.getElementById("qore-eventos").textContent);
+  const eventosJSON = document.getElementById("qore-eventos");
+  const eventos = eventosJSON ? JSON.parse(eventosJSON.textContent) : [];
   let eventosExecutados = new Set();
 
   function tocarQoreAudio() {
@@ -27,6 +27,11 @@ document.addEventListener("DOMContentLoaded", function () {
       audioCtx.resume();
       qoreAudio.play();
     }
+  }
+
+  function retomarQoreAudio() {
+    instrucao.style.display = "none";
+    qoreAudio.play();
   }
 
   qoreAudio.onplay = () => {
@@ -53,6 +58,8 @@ document.addEventListener("DOMContentLoaded", function () {
     eventos.forEach((evento) => {
       if (tempo >= evento.time && !eventosExecutados.has(evento.time)) {
         eventosExecutados.add(evento.time);
+
+        // Executa comandos
         evento.commands.forEach(cmd => {
           try {
             eval(cmd);
@@ -60,17 +67,14 @@ document.addEventListener("DOMContentLoaded", function () {
             console.warn("Erro ao executar comando:", cmd, e);
           }
         });
+
+        // Pausa se indicado
         if (evento.pause) {
           qoreAudio.pause();
           instrucao.style.display = "block";
         }
       }
     });
-  }
-
-  function retomarQoreAudio() {
-    instrucao.style.display = "none";
-    qoreAudio.play();
   }
 
   function startPulse() {
@@ -83,7 +87,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const avg = sum / dataArray.length;
       const scale = 1 + avg / 300;
       player.style.transform = `scale(${scale})`;
-
       animationFrame = requestAnimationFrame(animate);
     }
     animate();
@@ -94,12 +97,12 @@ document.addEventListener("DOMContentLoaded", function () {
     player.style.transform = "scale(1)";
   }
 
-  // Mock da matriz (substitua pelas reais no site)
+  // Mock das funções da matriz (remover quando usar as reais)
   function turnOffAllLabels() { console.log("🔕 Todas as labels desligadas"); }
   function activateLabel(id) { console.log("✅ Ativada:", id); }
   function activateBarGraph() { console.log("📊 Gráfico ativado"); }
 
-  // Acessível globalmente
+  // Torna as funções visíveis globalmente para uso no HTML
   window.tocarQoreAudio = tocarQoreAudio;
   window.retomarQoreAudio = retomarQoreAudio;
 });
